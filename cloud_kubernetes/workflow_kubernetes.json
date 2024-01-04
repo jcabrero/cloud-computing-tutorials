@@ -1,0 +1,329 @@
+{
+  "name": "My workflow",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "e6ca8fa7-5e4a-451d-98fa-84d2aa4642db",
+        "options": {}
+      },
+      "id": "2575c6ff-d21c-4934-8f4a-ef11c9b4c357",
+      "name": "Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1.1,
+      "position": [
+        20,
+        480
+      ],
+      "webhookId": "e6ca8fa7-5e4a-451d-98fa-84d2aa4642db"
+    },
+    {
+      "parameters": {
+        "bucketName": "={{ $('If').item.json[\"body\"][\"Records\"][0][\"s3\"][\"bucket\"][\"name\"] }}",
+        "fileKey": "={{ $json.new_file }}"
+      },
+      "id": "01ad8234-8d7e-4cc0-9cb0-59a5e78d1778",
+      "name": "S3",
+      "type": "n8n-nodes-base.s3",
+      "typeVersion": 1,
+      "position": [
+        880,
+        460
+      ],
+      "credentials": {
+        "s3": {
+          "id": "vYViGVUQlPXCzZDx",
+          "name": "S3 account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "resize",
+        "width": 400,
+        "height": 400,
+        "resizeOption": "ignoreAspectRatio",
+        "options": {}
+      },
+      "id": "59a592d9-7b25-4184-885c-149e0b1976d5",
+      "name": "Edit Image",
+      "type": "n8n-nodes-base.editImage",
+      "typeVersion": 1,
+      "position": [
+        1080,
+        460
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "upload",
+        "bucketName": "blur-bucket",
+        "fileName": "=grayscale-{{ $('Webhook').item.json.body.Records[0].s3.object.key }}",
+        "additionalFields": {}
+      },
+      "id": "6ef13a8c-1dba-4c21-8cf0-23c67954c920",
+      "name": "S31",
+      "type": "n8n-nodes-base.s3",
+      "typeVersion": 1,
+      "position": [
+        1600,
+        460
+      ],
+      "credentials": {
+        "s3": {
+          "id": "vYViGVUQlPXCzZDx",
+          "name": "S3 account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "832f34c0-8b06-4bd9-a655-6415d17119fe",
+              "leftValue": "={{ $json.body.Records[0].s3.object.userMetadata['content-type'] }}",
+              "rightValue": "image/png",
+              "operator": {
+                "type": "string",
+                "operation": "equals",
+                "name": "filter.operator.equals"
+              }
+            },
+            {
+              "id": "32bdb16f-c408-44ab-905d-6ade60592be9",
+              "leftValue": "={{ $json.body.Records[0].s3.object.userMetadata['content-type'] }}",
+              "rightValue": "image/jpeg",
+              "operator": {
+                "type": "string",
+                "operation": "equals",
+                "name": "filter.operator.equals"
+              }
+            },
+            {
+              "id": "95fc1cd0-1576-4a3f-abcb-2d06de619d67",
+              "leftValue": "={{ $json.body.Records[0].s3.object.key }}",
+              "rightValue": "grayscale",
+              "operator": {
+                "type": "string",
+                "operation": "notContains"
+              }
+            }
+          ],
+          "combinator": "or"
+        },
+        "options": {}
+      },
+      "id": "1fd132d3-3e5e-484a-a616-54728c0c0b0b",
+      "name": "If",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        480,
+        460
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://kubernetes:5000/grayscale",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "filename",
+              "value": "={{ $json[\"body\"][\"Records\"][0][\"s3\"][\"object\"][\"key\"] }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "a241f47a-6186-4151-8cd1-f49b98146a6b",
+      "name": "HTTP Request",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [
+        700,
+        460
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Loop over input items and add a new field called 'myNewField' to the JSON of each one\nfor (const item of $input.all()) {\n  //item.json.myNewField = 1;\n  //let binaryData = await this.helpers.getBinaryDataBuffer(0, 'data');\n  //const base64Data = Buffer.from(item).toString('base64');\n}\n\nconst binary = {};\nconst json = {numIcons: items.length,};\n\nfor (let i=0; i < items.length; i++){\n  //binary[`data${i}`] = items[i].binary.data;\n  json[`data${i}`] = Buffer.from(JSON.stringify(items[i].binary.data)).toString('base64');\n}\n\nreturn [\n  {\n    json,\n    binary,\n  }\n];"
+      },
+      "id": "1ae0500d-daeb-4bc4-9945-5978962e0c78",
+      "name": "To Base 64",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        760,
+        700
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "multiStep",
+        "operations": {
+          "operations": [
+            {
+              "operation": "create",
+              "backgroundColor": "#000000ff",
+              "width": 400,
+              "height": 400
+            },
+            {
+              "operation": "draw",
+              "primitive": "circle",
+              "color": "#ffffff00",
+              "startPositionX": 200,
+              "startPositionY": 200,
+              "endPositionX": 50,
+              "endPositionY": 100
+            },
+            {
+              "operation": "composite",
+              "dataPropertyNameComposite": "data",
+              "operator": "In"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "01d6caf0-4f6c-4c5f-b1ca-017e3b719b28",
+      "name": "Edit Image1",
+      "type": "n8n-nodes-base.editImage",
+      "typeVersion": 1,
+      "position": [
+        1360,
+        460
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "95640fa6-3cfb-493e-9ce7-bd9756078ed5",
+              "leftValue": "={{ $json.body.Records[0].s3.object.key }} {{ $json.body.Records[0].s3.object.key }}",
+              "rightValue": "grayscale",
+              "operator": {
+                "type": "string",
+                "operation": "notContains"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "0c18d346-ccfc-481f-8c97-c5371400ae0c",
+      "name": "Not Grayscale",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        220,
+        480
+      ]
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Not Grayscale",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "S3": {
+      "main": [
+        [
+          {
+            "node": "Edit Image",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Image": {
+      "main": [
+        [
+          {
+            "node": "Edit Image1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request": {
+      "main": [
+        [
+          {
+            "node": "S3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Image1": {
+      "main": [
+        [
+          {
+            "node": "S31",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Not Grayscale": {
+      "main": [
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "a645bcbf-588f-49b3-81cd-6e6e04e33221",
+  "id": "Zl0bl4YUTFTf8dyC",
+  "meta": {
+    "instanceId": "445a14271c12460abca16c07d500c3811be345572b0196294a22dbb74519a076"
+  },
+  "tags": []
+}

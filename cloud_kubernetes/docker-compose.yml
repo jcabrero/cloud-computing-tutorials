@@ -1,0 +1,66 @@
+version: '3'
+
+services:
+  flask:
+    privileged: true
+    image: flask-grayscale
+    environment:
+      minio_endpoint: 'minio:9000'
+      minio_access_key: '1JZ0vglLbyTlvmvQu82s'
+      minio_secret_key: 'ZcwKlRvBWp4aRhmpdQTh0qGJHruSQhbDeoiuXogT'
+      minio_bucket: "minio-bucket"
+    ports:
+      - "8000:5000"
+  kubernetes:
+    privileged: true
+    image: rancher/k3s:v1.27.9-k3s1
+    container_name: kubernetes
+    hostname: kubernetes
+    ports:
+      - "6443:6443"
+      - "5000:5000"
+    command: server #--disable traefik
+    networks:
+      mynetwork:
+        ipv4_address: 10.0.0.3
+  minio:
+    image: quay.io/minio/minio
+    environment:
+      - MINIO_API_SYNC_EVENTS=on
+        #- MINIO_NOTIFY_WEBHOOK_ENABLE=on
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    volumes:
+      - minio_data:/data
+    networks:
+      mynetwork:
+        ipv4_address: 10.0.0.2
+    command: server /data --console-address "0.0.0.0:9001" --address "0.0.0.0:9000"
+  n8n:
+    image: docker.n8n.io/n8nio/n8n
+    container_name: n8n
+    ports:
+      - "5678:5678"
+   #environment:
+        # N8N_BASIC_AUTH_ACTIVE: "true"
+        # N8N_BASIC_AUTH_USER: "abc"
+        #N8N_BASIC_AUTH_PASSWORD: "abc"
+    volumes:
+      - n8n_data:/home/node/.n8n
+    depends_on:
+      - minio
+    networks:
+      - "mynetwork"
+        #command: start --tunnel
+volumes:
+  minio_data:
+  n8n_data:
+
+networks:
+  mynetwork:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 10.0.0.0/24
+          gateway: 10.0.0.1

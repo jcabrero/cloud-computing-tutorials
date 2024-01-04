@@ -1,0 +1,342 @@
+{
+  "name": "My workflow",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "e6ca8fa7-5e4a-451d-98fa-84d2aa4642db",
+        "options": {}
+      },
+      "id": "66dc99bb-2def-4798-9196-94f3a990c9f9",
+      "name": "Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1.1,
+      "position": [
+        480,
+        580
+      ],
+      "webhookId": "e6ca8fa7-5e4a-451d-98fa-84d2aa4642db"
+    },
+    {
+      "parameters": {
+        "bucketName": "={{ $('If').item.json[\"body\"][\"Records\"][0][\"s3\"][\"bucket\"][\"name\"] }}",
+        "fileKey": "={{ $json.new_file }}"
+      },
+      "id": "edad2e21-adcf-4a99-b02a-20fd197f7c80",
+      "name": "S3",
+      "type": "n8n-nodes-base.s3",
+      "typeVersion": 1,
+      "position": [
+        1340,
+        560
+      ],
+      "credentials": {
+        "s3": {
+          "id": "IBHsx5WTytgWfRJW",
+          "name": "S3 account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "resize",
+        "width": 400,
+        "height": 400,
+        "resizeOption": "ignoreAspectRatio",
+        "options": {}
+      },
+      "id": "83cc7b2f-fe88-4554-9227-3b3c8a17f737",
+      "name": "Edit Image",
+      "type": "n8n-nodes-base.editImage",
+      "typeVersion": 1,
+      "position": [
+        1540,
+        560
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "upload",
+        "bucketName": "blur-bucket",
+        "fileName": "=grayscale-{{ $('Webhook').item.json.body.Records[0].s3.object.key }}",
+        "additionalFields": {}
+      },
+      "id": "c8112356-d0a1-4543-90ff-e71c944f1699",
+      "name": "S31",
+      "type": "n8n-nodes-base.s3",
+      "typeVersion": 1,
+      "position": [
+        2060,
+        560
+      ],
+      "credentials": {
+        "s3": {
+          "id": "IBHsx5WTytgWfRJW",
+          "name": "S3 account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "832f34c0-8b06-4bd9-a655-6415d17119fe",
+              "leftValue": "={{ $json.body.Records[0].s3.object.userMetadata['content-type'] }}",
+              "rightValue": "image/png",
+              "operator": {
+                "type": "string",
+                "operation": "equals",
+                "name": "filter.operator.equals"
+              }
+            },
+            {
+              "id": "32bdb16f-c408-44ab-905d-6ade60592be9",
+              "leftValue": "={{ $json.body.Records[0].s3.object.userMetadata['content-type'] }}",
+              "rightValue": "image/jpeg",
+              "operator": {
+                "type": "string",
+                "operation": "equals",
+                "name": "filter.operator.equals"
+              }
+            },
+            {
+              "id": "95fc1cd0-1576-4a3f-abcb-2d06de619d67",
+              "leftValue": "={{ $json.body.Records[0].s3.object.key }}",
+              "rightValue": "grayscale",
+              "operator": {
+                "type": "string",
+                "operation": "notContains"
+              }
+            }
+          ],
+          "combinator": "or"
+        },
+        "options": {}
+      },
+      "id": "e789aa65-1f14-402b-96b9-a0afee521ce8",
+      "name": "If",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        920,
+        560
+      ]
+    },
+    {
+      "parameters": {
+        "content": "# TE PUEDES DEJAR DE REIR."
+      },
+      "id": "1ce6a171-f633-4eff-8c30-8c64a96cfa2b",
+      "name": "Sticky Note",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        640,
+        960
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://flask:5000/grayscale",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "filename",
+              "value": "={{ $json[\"body\"][\"Records\"][0][\"s3\"][\"object\"][\"key\"] }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "4b62434e-312d-4349-9aca-1f96473c4843",
+      "name": "HTTP Request",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [
+        1160,
+        560
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Loop over input items and add a new field called 'myNewField' to the JSON of each one\nfor (const item of $input.all()) {\n  //item.json.myNewField = 1;\n  //let binaryData = await this.helpers.getBinaryDataBuffer(0, 'data');\n  //const base64Data = Buffer.from(item).toString('base64');\n}\n\nconst binary = {};\nconst json = {numIcons: items.length,};\n\nfor (let i=0; i < items.length; i++){\n  //binary[`data${i}`] = items[i].binary.data;\n  json[`data${i}`] = Buffer.from(JSON.stringify(items[i].binary.data)).toString('base64');\n}\n\nreturn [\n  {\n    json,\n    binary,\n  }\n];"
+      },
+      "id": "0ed12cb1-bea1-4894-9edf-c8b35c182aa0",
+      "name": "To Base 64",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1220,
+        800
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "multiStep",
+        "operations": {
+          "operations": [
+            {
+              "operation": "create",
+              "backgroundColor": "#000000ff",
+              "width": 400,
+              "height": 400
+            },
+            {
+              "operation": "draw",
+              "primitive": "circle",
+              "color": "#ffffff00",
+              "startPositionX": 200,
+              "startPositionY": 200,
+              "endPositionX": 50,
+              "endPositionY": 100
+            },
+            {
+              "operation": "composite",
+              "dataPropertyNameComposite": "data",
+              "operator": "In"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "f57bf801-c0a7-46f4-a354-4a94524879e8",
+      "name": "Edit Image1",
+      "type": "n8n-nodes-base.editImage",
+      "typeVersion": 1,
+      "position": [
+        1820,
+        560
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "95640fa6-3cfb-493e-9ce7-bd9756078ed5",
+              "leftValue": "={{ $json.body.Records[0].s3.object.key }} {{ $json.body.Records[0].s3.object.key }}",
+              "rightValue": "grayscale",
+              "operator": {
+                "type": "string",
+                "operation": "notContains"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "021df9fa-fe0c-466f-a1e2-0c58691e9bba",
+      "name": "Not Grayscale",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        680,
+        580
+      ]
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Not Grayscale",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "S3": {
+      "main": [
+        [
+          {
+            "node": "Edit Image",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Image": {
+      "main": [
+        [
+          {
+            "node": "Edit Image1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request": {
+      "main": [
+        [
+          {
+            "node": "S3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Image1": {
+      "main": [
+        [
+          {
+            "node": "S31",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Not Grayscale": {
+      "main": [
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "6b7d199f-0ecb-4282-8191-2e306d1fb732",
+  "id": "SHDkBuoRgu2U0C0F",
+  "meta": {
+    "instanceId": "242412d2539996cb15b802c7d2aebf040d3adf323ef43348b24a6091ec757296"
+  },
+  "tags": []
+}

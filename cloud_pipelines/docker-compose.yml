@@ -1,0 +1,40 @@
+version: '3'
+
+services:
+  flask:
+      container_name: flask
+      build:
+        context: ./server/
+        dockerfile: Dockerfile
+      volumes:
+        - ./server/server.py:/app/server.py
+      ports:
+        - "8000:5000"
+  minio:
+    image: quay.io/minio/minio
+    environment:
+      - MINIO_API_SYNC_EVENTS=on
+        #- MINIO_NOTIFY_WEBHOOK_ENABLE=on
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    volumes:
+      - minio_data:/data
+    command: server /data --console-address "0.0.0.0:9001" --address "0.0.0.0:9000"
+  n8n:
+    image: docker.n8n.io/n8nio/n8n
+    container_name: n8n
+    ports:
+      - "5678:5678"
+   #environment:
+        # N8N_BASIC_AUTH_ACTIVE: "true"
+        # N8N_BASIC_AUTH_USER: "abc"
+        #N8N_BASIC_AUTH_PASSWORD: "abc"
+    volumes:
+      - n8n_data:/home/node/.n8n
+    depends_on:
+      - minio
+        #command: start --tunnel
+volumes:
+  minio_data:
+  n8n_data:

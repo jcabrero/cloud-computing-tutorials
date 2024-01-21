@@ -6,6 +6,7 @@ from minio import Minio
 from minio.error import S3Error
 import os
 import base64
+import json
 
 app = Flask(__name__)
 
@@ -17,8 +18,8 @@ print(os.getenv("minio_access_key"))
 MINIO_ACCESS_KEY = os.getenv("minio_access_key")
 print(os.getenv("minio_secret_key"))
 MINIO_SECRET_KEY = os.getenv("minio_secret_key")
-MINIO_INPUT_BUCKET_NAME = os.getenv("minio_bucket")
-MINIO_OUTPUT_BUCKET_NAME = os.getenv("minio_bucket")
+MINIO_INPUT_BUCKET_NAME = os.getenv("minio_input_bucket")
+MINIO_OUTPUT_BUCKET_NAME = os.getenv("minio_output_bucket")
 
 def download_from_minio(filename):
     try:
@@ -57,7 +58,7 @@ def upload_to_minio(filename, image_data):
 
         # Upload the grayscale image to Minio
         minio_client.put_object(
-            bucket_name=MINIO_INPUT_BUCKET_NAME,
+            bucket_name=MINIO_OUTPUT_BUCKET_NAME,
             object_name=filename,
             data=BytesIO(image_data),
             length=len(image_data),
@@ -95,6 +96,7 @@ def index():
             <li>MINIO_ACCESS_KEY: {MINIO_ACCESS_KEY}</li>
             <li>MINIO_SECRET_KEY: {MINIO_SECRET_KEY}</li>
             <li>MINIO_INPUT_BUCKET_NAME: {MINIO_INPUT_BUCKET_NAME}</li>
+            <li>MINIO_OUTPUT_BUCKET_NAME: {MINIO_OUTPUT_BUCKET_NAME}</li>
         </ul>
     </body>
     </html>
@@ -128,21 +130,29 @@ def test():
 """
 
 
+@app.route('/cpu_test', methods=['GET'])
+def cpu_test():
+    total = 0
+    for i in range(1_000_000):
+        total += (i ** 0.5 + i) * i / ((i / 2) + 1)
+    return json.dumps(total)
+
 @app.route('/grayscale', methods=['POST'])
 def grayscale(): 
     # Get the binary data from the request
     filename = request.args.get('filename')
     
     
+
     if not filename:
         filename = request.form.get('filename')
-    print("filename: ", filename)
+    print("filename: ", filename, flush=True)
     if not filename:
         return jsonify({'error': 'Filename parameter is required.'}), 400
 
     # Download the image from Minio
     image_data = download_from_minio(filename)
-
+    print("filename: ", filename, flush=True)
     # Convert binary data to NumPy array
     #image_array = np.array(Image.open(BytesIO(image_data)))
     image_array = Image.open(BytesIO(image_data))
@@ -163,7 +173,7 @@ def grayscale():
     new_file = f"grayscale_{filename}"
     upload_to_minio(new_file, output_binary)
 
-    print("Sending file")
+    print("Sending file", flush=True)
     return jsonify({"new_file": new_file})
 
 if __name__ == '__main__':

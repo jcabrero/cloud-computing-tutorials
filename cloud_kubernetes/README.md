@@ -10,7 +10,7 @@ In MacOS it is not needed, you will only need the terminal
 ```bash
 mkdir -p ~/.kube/
 sudo docker cp kubernetes:/etc/rancher/k3s/k3s.yaml ~/.kube/config
-sudo chown 1000:1000 .kube/config
+sudo chown 1000:1000 ~/.kube/config
 ```
 
 
@@ -192,7 +192,7 @@ kubectl get hpa --watch
 On the second terminal, we are going to generate load:
 
 ```bash
-kubectl run -i --tty load-generator --rm --image=busybox:1.28 --restart=Never -- /bin/sh -c "while sleep 0.01; do wget -q -O- http://10.0.0.3:5000/; done"
+kubectl run -i --tty load-generator --rm --image=busybox:1.28 --restart=Never -- /bin/sh -c "while sleep 0.01; do wget -q -O- http://10.0.0.3:5000/cpu_test; done"
 ```
 
 # Other commands needed:

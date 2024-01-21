@@ -9,10 +9,10 @@ app = Flask(__name__)
 
 # Minio configurations
 MINIO_ENDPOINT = 'minio:9000'
-MINIO_ACCESS_KEY = 'cw8X2ZpcG6634AqXFmVA'
-MINIO_SECRET_KEY = 'eWWl8BK8xLnz8Un7Ouvbmu24AkbBQyc3d5DH5nMl'
-MINIO_INPUT_BUCKET_NAME = 'minio-bucket'
-MINIO_OUTPUT_BUCKET_NAME = 'minio-bucket'
+MINIO_ACCESS_KEY = 'ARl1xYLr9Or8Jo4W5e6E'
+MINIO_SECRET_KEY = 'aMwUjJF3GjaGeq6Tt8scB6jzROvxpl8wF1syqMMC'
+MINIO_INPUT_BUCKET_NAME = 'initial'
+MINIO_OUTPUT_BUCKET_NAME = 'grayscale'
 
 def download_from_minio(filename):
     try:
@@ -51,7 +51,7 @@ def upload_to_minio(filename, image_data):
 
         # Upload the grayscale image to Minio
         minio_client.put_object(
-            bucket_name=MINIO_INPUT_BUCKET_NAME,
+            bucket_name=MINIO_OUTPUT_BUCKET_NAME,
             object_name=filename,
             data=BytesIO(image_data),
             length=len(image_data),
@@ -72,12 +72,14 @@ def rgb_to_gray(image):
 def grayscale(): 
     # Get the binary data from the request
     filename = request.args.get('filename')
+    if not filename:
+        filename = request.form.get('filename')
 
-    print("filename: ", filename)
+    print("filename: ", filename, flush=True)
 
     if not filename:
         return jsonify({'error': 'Filename parameter is required.'}), 400
-
+    
     # Download the image from Minio
     image_data = download_from_minio(filename)
 

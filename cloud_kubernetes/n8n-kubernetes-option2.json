@@ -1,23 +1,23 @@
 {
-  "name": "My workflow 2",
+  "name": "My workflow",
   "nodes": [
     {
       "parameters": {
         "bucketName": "={{ $json.body.Records[0].s3.bucket.name }}",
         "fileKey": "={{ $json.body.Records[0].s3.object.key }}"
       },
-      "id": "4ed9cff0-a61f-44ac-b006-fe102fbde519",
+      "id": "d313fa55-dc40-42f4-9ded-236c7cf2b142",
       "name": "S3",
       "type": "n8n-nodes-base.s3",
       "typeVersion": 1,
       "position": [
-        860,
-        760
+        680,
+        620
       ],
       "credentials": {
         "s3": {
-          "id": "KETCivVcDVMhlQ4h",
-          "name": "S3 account"
+          "id": "3mcgsQZenJ47M9ih",
+          "name": "Unnamed credential"
         }
       }
     },
@@ -29,13 +29,13 @@
         "resizeOption": "ignoreAspectRatio",
         "options": {}
       },
-      "id": "0ef62e73-ebe6-45c5-ad66-b20b3a5904e7",
+      "id": "40d655ec-0c44-4ea6-a969-8f4c99f293ff",
       "name": "Edit Image",
       "type": "n8n-nodes-base.editImage",
       "typeVersion": 1,
       "position": [
-        1040,
-        760
+        860,
+        620
       ]
     },
     {
@@ -67,13 +67,13 @@
         },
         "options": {}
       },
-      "id": "cca34344-4418-4de0-89ac-7840956e081b",
+      "id": "745c8b49-e19a-429c-84eb-68d5629b8b07",
       "name": "Edit Image1",
       "type": "n8n-nodes-base.editImage",
       "typeVersion": 1,
       "position": [
-        1260,
-        760
+        1080,
+        620
       ]
     },
     {
@@ -83,18 +83,18 @@
         "fileName": "={{ $json.body.Records[0].s3.object.key }}_circled.png",
         "additionalFields": {}
       },
-      "id": "303a144e-f60c-4d76-a135-becdc2e227c3",
+      "id": "2f7d12f1-3dc2-4a42-b174-b402196e2903",
       "name": "S31",
       "type": "n8n-nodes-base.s3",
       "typeVersion": 1,
       "position": [
-        1480,
-        760
+        1300,
+        620
       ],
       "credentials": {
         "s3": {
-          "id": "KETCivVcDVMhlQ4h",
-          "name": "S3 account"
+          "id": "3mcgsQZenJ47M9ih",
+          "name": "Unnamed credential"
         }
       }
     },
@@ -104,13 +104,13 @@
         "path": "80dbcb9c-69ec-4ab9-b1b5-b08c03736543",
         "options": {}
       },
-      "id": "48071312-901f-49f1-954d-aea4599f3c31",
+      "id": "c45923de-55ec-4cf2-b680-ea49843532db",
       "name": "Webhook Initial",
       "type": "n8n-nodes-base.webhook",
       "typeVersion": 1.1,
       "position": [
-        640,
-        600
+        460,
+        460
       ],
       "webhookId": "80dbcb9c-69ec-4ab9-b1b5-b08c03736543"
     },
@@ -120,20 +120,20 @@
         "path": "a3cacfa9-4baf-48d9-96ee-9dc1063823e2",
         "options": {}
       },
-      "id": "d20b1e53-5328-4b69-bcd5-a5216690b0a1",
+      "id": "272f8bd0-fb0b-4130-8b22-68eaee1054ee",
       "name": "Webhook Grayscale",
       "type": "n8n-nodes-base.webhook",
       "typeVersion": 1.1,
       "position": [
-        640,
-        760
+        460,
+        620
       ],
       "webhookId": "a3cacfa9-4baf-48d9-96ee-9dc1063823e2"
     },
     {
       "parameters": {
         "method": "POST",
-        "url": "http://flask:5000/grayscale",
+        "url": "http://kubernetes:5000/grayscale",
         "sendQuery": true,
         "queryParameters": {
           "parameters": [
@@ -145,13 +145,13 @@
         },
         "options": {}
       },
-      "id": "d84dcf83-75cb-45de-99ef-44b32d5df083",
+      "id": "6333f854-857a-4ed8-802e-7cb76e5c7a27",
       "name": "HTTP Request",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.1,
       "position": [
-        860,
-        600
+        680,
+        460
       ]
     }
   ],
@@ -217,11 +217,11 @@
   "settings": {
     "executionOrder": "v1"
   },
-  "versionId": "ced4167c-db4a-4f69-8736-7cdb7c5267d5",
+  "versionId": "542be25a-f45b-4d61-89e4-d0ea921426f2",
   "meta": {
     "templateCredsSetupCompleted": true,
-    "instanceId": "8d800f130381543ba448a72ec2c49a60e3f49f147968c0865c0021f9c13c1b2d"
+    "instanceId": "81261cf8536573d007ceef93637887c7d77a4d0464e4503f436c9973b43f0092"
   },
-  "id": "Pao2zdYKR9TTYNOx",
+  "id": "T9rXSSY1Jke0wOZy",
   "tags": []
 }

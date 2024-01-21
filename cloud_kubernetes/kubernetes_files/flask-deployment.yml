@@ -6,7 +6,7 @@ metadata:
   labels:
     app: flaskapi
 spec:
-  replicas: 3
+  replicas: 1
   selector:
     matchLabels:
       app: flaskapi
@@ -37,8 +37,10 @@ spec:
                 secretKeyRef:
                   name: flaskapi-secrets
                   key: minio_access_key
-            - name: minio_bucket
-              value: minio-bucket
+            - name: minio_input_bucket
+              value: initial
+            - name: minio_output_bucket
+              value: grayscale
             - name: minio_endpoint
               value: 10.0.0.2:9000 # Needed otherwise CoreDNS will not redirect to MINIO.
 

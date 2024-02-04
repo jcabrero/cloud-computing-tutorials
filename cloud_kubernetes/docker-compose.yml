@@ -3,7 +3,8 @@ version: '3'
 services:
   minio:
     container_name: minio
-    image: quay.io/minio/minio
+    image: quay.io/minio/minio:RELEASE.2024-01-13T07-53-03Z
+
     environment:
       - MINIO_API_SYNC_EVENTS=on
     ports:
@@ -22,20 +23,20 @@ services:
     hostname: kubernetes
     ports:
       - "6443:6443"
-      - "5000:5000"
+      - "8001:5000"
     command: server #--disable traefik
     networks:
       mynetwork:
         ipv4_address: 10.0.0.3
   flask:
     container_name: flask
-    image: jcabrero/flask-grayscale:latest
+    image: jcabrero/flask-grayscale:arm64
     environment:
       minio_endpoint: 'minio:9000'
       minio_access_key: 'accesskey'
       minio_secret_key: 'secretkey'
-      minio_input_bucket: "initial"
-      minio_output_bucket: "grayscale"
+      minio_input_bucket: 'initial'
+      minio_output_bucket: 'grayscale'
     ports:
       - "8000:5000"
     depends_on:
